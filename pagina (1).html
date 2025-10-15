@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Silencio que habla</title>
+  <link rel="stylesheet" href="estilo.css" />
+</head>
+<body>
+
+  <header>
+    <div class="black-bar">
+      <img src="logo.png" alt="Logo Silencio que habla" class="logo" />
+      <h1 class="group-name">Silencio que habla</h1>
+    </div>
+  </header>
+  
+    <footer class="white-bar">
+    <p class="email-text">Nuestro Gmail: silencio.que.habla2025@gmail.com</p>
+  </footer>
+
+  <main>
+    <div class="translator">
+      <p>Escribe alguna palabra para traducirla</p>
+      <div class="input-group">
+        <input type="text" id="wordInput" placeholder="Tu palabra en español" />
+        <button id="translateBtn">Traducir</button>
+      </div>
+      <div id="results" class="results"></div>
+
+      <!-- Sección de señas local -->
+      <div id="signSection" class="sign-section"></div>
+    </div>
+  </main>
+
+  <script>
+  (function(){
+    const btn      = document.getElementById("translateBtn");
+    const input    = document.getElementById("wordInput");
+    const results  = document.getElementById("results");
+    const signSec  = document.getElementById("signSection");
+
+    // Solo 5 idiomas
+    const languages = [
+      { code: "en",    name: "Inglés"   },
+      { code: "fr",    name: "Francés"  },
+      { code: "it",    name: "Italiano" },
+      { code: "ja",    name: "Japonés"  },
+      { code: "zh-CN", name: "Chino"    }
+    ];
+
+    function translateAndSign() {
+      const word = input.value.trim();
+      if (!word) return;
+
+      // limpia traducciones y señas
+      results.innerHTML  = "";
+      signSec.innerHTML  = "";
+
+      // traducir a cada idioma
+      languages.forEach(lang => {
+        const box = document.createElement("div");
+        box.className = "translation-box shiny";
+        box.innerHTML = `<p>${lang.name}: …</p>`;
+        results.appendChild(box);
+
+        fetch(
+          `https://translate.googleapis.com/translate_a/single?client=gtx&sl=es&tl=${lang.code}&dt=t&q=${encodeURIComponent(word)}`
+        )
+        .then(res => res.json())
+        .then(data => {
+          const translated = data[0].map(seg => seg[0]).join("");
+          box.innerHTML = `<p>${lang.name}: ${translated}</p>`;
+          setTimeout(() => box.classList.remove("shiny"), 800);
+        })
+        .catch(() => {
+          box.innerHTML = `<p>${lang.name}: error</p>`;
+          box.style.background = "#ffdede";
+        });
+      });
+
+      // construir sección de señas usando las imágenes locales
+      const letters   = word.toUpperCase().split("");
+      signSec.innerHTML = `
+        <h2>Mensaje con señas</h2>
+        <div class="sign-images"></div>
+      `;
+      const container = signSec.querySelector(".sign-images");
+
+      letters.forEach(char => {
+        if (/[A-ZÑÁÉÍÓÚ]/.test(char)) {
+          const img = document.createElement("img");
+          img.src    = `abecedario/${char}.png`;
+          img.alt    = `Seña de ${char}`;
+          img.className = "sign-letter";
+          img.onerror = () => img.style.display = "none";
+          container.appendChild(img);
+        }
+      });
+    }
+
+    btn.addEventListener("click", translateAndSign);
+    input.addEventListener("keydown", e => {
+      if (e.key === "Enter") translateAndSign();
+    });
+  })();
+  </script>
+
+</body>
+</html>
